@@ -35,6 +35,17 @@ def main():
     splash.show()
     app.processEvents()
 
+    # Icono de la app (taskbar + ventana)
+    from pathlib import Path
+    from PyQt6.QtGui import QIcon
+    icon_path = Path(__file__).parent / "astro_belladev.ico"
+    if icon_path.exists():
+        app.setWindowIcon(QIcon(str(icon_path)))
+    else:
+        icon_png = Path(__file__).parent / "astro_belladev.png"
+        if icon_png.exists():
+            app.setWindowIcon(QIcon(str(icon_png)))
+
     from astro_belladev.gui.main_window import MainWindow
     window = MainWindow()
 

@@ -126,6 +126,13 @@ class ScriptsDialog(QDialog):
 
         btn_layout.addStretch()
 
+        download_btn = QPushButton("Descargar online")
+        download_btn.setStyleSheet(
+            "color: #4A7FB5; font-weight: 600;"
+        )
+        download_btn.clicked.connect(self._on_download)
+        btn_layout.addWidget(download_btn)
+
         folder_btn = QPushButton("Abrir carpeta")
         folder_btn.clicked.connect(self._on_open_folder)
         btn_layout.addWidget(folder_btn)
@@ -262,6 +269,118 @@ class ScriptsDialog(QDialog):
         import subprocess
         folder = self.manager._dirs[-1]
         subprocess.Popen(f'explorer "{folder}"')
+
+    def _on_download(self):
+        """Descarga scripts desde el repositorio online."""
+        import urllib.request
+        import ssl
+        import json
+
+        REPO_URL = ("https://api.github.com/repos/bellaseia/"
+                    "astro-belladev/contents/community_scripts")
+
+        self.status_label = getattr(self, 'status_label', None)
+
+        try:
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+            req = urllib.request.Request(REPO_URL, headers={
+                "User-Agent": "AstroBellaDev/1.1",
+                "Accept": "application/vnd.github.v3+json",
+            })
+
+            try:
+                with urllib.request.urlopen(
+                    req, timeout=10, context=ctx
+                ) as resp:
+                    files = json.loads(resp.read().decode())
+            except Exception:
+                files = []
+
+            if not files:
+                # Fallback: ofrecer scripts de ejemplo
+                self._download_example_scripts()
+                return
+
+            dest = self.manager._dirs[-1]
+            downloaded = 0
+
+            for f in files:
+                if f.get("name", "").endswith((".py", ".abs")):
+                    dl_url = f.get("download_url", "")
+                    if dl_url:
+                        try:
+                            req2 = urllib.request.Request(
+                                dl_url,
+                                headers={"User-Agent": "AstroBellaDev"},
+                            )
+                            with urllib.request.urlopen(
+                                req2, timeout=10, context=ctx
+                            ) as resp2:
+                                content = resp2.read()
+
+                            from pathlib import Path
+                            out = Path(dest) / f["name"]
+                            out.write_bytes(content)
+                            downloaded += 1
+                        except Exception:
+                            pass
+
+            self.manager.scan()
+            self._populate_table()
+            QMessageBox.information(
+                self, "Descarga completada",
+                f"{downloaded} scripts descargados.\n"
+                f"Guardados en: {dest}",
+            )
+
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Error de conexion",
+                f"No se pudo conectar al repositorio:\n{e}\n\n"
+                "Puedes importar scripts manualmente con "
+                "'Importar .py/.abs'",
+            )
+
+    def _download_example_scripts(self):
+        """Descarga scripts de ejemplo si no hay repo online."""
+        examples = [
+            ("ha_oiii_bicolor.abs",
+             "# Nombre: Ha+OIII Bicolor\n"
+             "# Autor: Comunidad BellaDev\n"
+             "# Descripcion: Combina Ha y OIII en bicolor\n"
+             "# Categoria: Narrowband\n\n"
+             "stretch_midtone midtone=0.20 black_clip=-3.0\n"
+             "background_abe grid_size=10 degree=3\n"
+             "denoise_selective lum_strength=0.6 chrom_strength=0.3\n"
+             "saturation_selective target_hue=0 factor=1.8 hue_range=20\n"),
+            ("planetary_detail.abs",
+             "# Nombre: Detalle Planetario\n"
+             "# Autor: Comunidad BellaDev\n"
+             "# Descripcion: Maximiza detalle en planetarias\n"
+             "# Categoria: Objetos\n\n"
+             "stretch_midtone midtone=0.35 black_clip=-1.5\n"
+             "sharpen_deconv psf_sigma=1.0 iterations=20\n"
+             "clahe clip_limit=3.0 grid_size=6\n"
+             "saturation factor=1.2\n"),
+        ]
+
+        dest = self.manager._dirs[-1]
+        from pathlib import Path
+        for name, content in examples:
+            (Path(dest) / name).write_text(content, encoding="utf-8")
+
+        self.manager.scan()
+        self._populate_table()
+        QMessageBox.information(
+            self, "Scripts de ejemplo",
+            f"2 scripts de ejemplo descargados.\n"
+            f"Guardados en: {dest}\n\n"
+            "Crea un directorio 'community_scripts' en tu "
+            "repositorio GitHub para compartir mas scripts.",
+        )
 
     def _refresh(self):
         self.manager.scan()

@@ -33,7 +33,7 @@ from .about_dialog import AboutDialog
 from .wizard_panel import WizardPanel
 from .scripts_dialog import ScriptsDialog
 from .preprocess_dialog import PreprocessDialog
-from .multi_input_dialog import HDRDialog, PixelMathDialog, NarrowbandDialog
+from .multi_input_dialog import HDRDialog, PixelMathDialog, NarrowbandDialog, MosaicDialog
 from .log_panel import LogPanel
 
 
@@ -620,7 +620,7 @@ class MainWindow(QMainWindow):
             "pixelmath_rgb": self._dialog_pixelmath,
             "nb_combine_custom": self._dialog_narrowband,
             "batch_process": self._show_scripts,
-            "mosaic_stitch": self._show_preprocess,
+            "mosaic_stitch": self._dialog_mosaic,
             "search_catalog": self._show_planner,
             "annotate_objects": self._action_annotate,
             "annotate_full": self._action_annotate,
@@ -999,6 +999,19 @@ class MainWindow(QMainWindow):
         else:
             print("[Plate Solving] No se pudo resolver")
             self.status_label.setText("Plate solving fallido")
+
+    def _dialog_mosaic(self):
+        """Dialogo Mosaico."""
+        dlg = MosaicDialog(self.session.current_data, self)
+        if dlg.exec():
+            result = dlg.get_result()
+            if result is not None:
+                import numpy as np
+                self.session.load_image(
+                    result.astype(np.float32), "Mosaico"
+                )
+                self._update_display()
+                print("[Mosaico] Paneles unidos")
 
     def _dialog_hdr(self):
         """Dialogo HDR: combinar 2 exposiciones."""

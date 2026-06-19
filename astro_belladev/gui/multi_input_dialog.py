@@ -271,3 +271,88 @@ class NarrowbandDialog(QDialog):
 
     def get_result(self):
         return self.result
+
+
+class MosaicDialog(QDialog):
+    """Une multiples paneles en un mosaico."""
+
+    def __init__(self, current_data, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Mosaico - Unir Paneles")
+        self.setMinimumSize(550, 400)
+        self.result = None
+        self.current = current_data
+        self._panel_paths = []
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(
+            "La imagen actual es el panel 1.\n"
+            "Anade mas paneles para unir en mosaico."
+        ))
+
+        from PyQt6.QtWidgets import QListWidget
+        self.panel_list = QListWidget()
+        self.panel_list.addItem("Panel 1: imagen actual")
+        self.panel_list.setStyleSheet(
+            "QListWidget{background:#1A1E30;color:#E0E4EC;"
+            "border:1px solid #2A2F45;}"
+        )
+        layout.addWidget(self.panel_list, stretch=1)
+
+        add_row = QHBoxLayout()
+        add_btn = QPushButton("Anadir panel...")
+        add_btn.clicked.connect(self._add_panel)
+        add_row.addWidget(add_btn)
+        remove_btn = QPushButton("Quitar")
+        remove_btn.clicked.connect(self._remove_panel)
+        add_row.addWidget(remove_btn)
+        layout.addLayout(add_row)
+
+        bl = QHBoxLayout()
+        bl.addStretch()
+        bl.addWidget(QPushButton("Cancelar", clicked=self.reject))
+        ok = QPushButton("Unir paneles")
+        ok.setObjectName("primary")
+        ok.clicked.connect(self._stitch)
+        bl.addWidget(ok)
+        layout.addLayout(bl)
+
+    def _add_panel(self):
+        paths, _ = QFileDialog.getOpenFileNames(
+            self, "Paneles", "",
+            "Astro (*.fits *.fit *.tif *.tiff *.png);;All (*)",
+        )
+        import os
+        for p in paths:
+            self._panel_paths.append(p)
+            self.panel_list.addItem(
+                f"Panel {self.panel_list.count()+1}: "
+                f"{os.path.basename(p)}"
+            )
+
+    def _remove_panel(self):
+        row = self.panel_list.currentRow()
+        if row > 0:
+            self.panel_list.takeItem(row)
+            self._panel_paths.pop(row - 1)
+
+    def _stitch(self):
+        if not self._panel_paths:
+            QMessageBox.warning(self, "Sin paneles",
+                                "Anade al menos un panel mas")
+            return
+        try:
+            from ..io_fits import load_image
+            from ..mosaic import stitch_two_panels
+            result = self.current.copy()
+            for i, path in enumerate(self._panel_paths):
+                panel, _ = load_image(path)
+                print(f"  Uniendo panel {i+2}...")
+                result = stitch_two_panels(result, panel)
+            self.result = result
+            self.accept()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
+    def get_result(self):
+        return self.result
