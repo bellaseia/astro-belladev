@@ -1,0 +1,7 @@
+astropy>=6.0
+numpy>=1.24
+scipy>=1.11
+astroalign>=2.4
+opencv-python-headless>=4.8
+rawpy>=0.19
+tifffile>=2023.7
