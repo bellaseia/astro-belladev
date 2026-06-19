@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astro-belladev"
+version = "1.1.0"
+description = "Astrophotography Processing Suite - Alternative to PixInsight/Siril"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "BellaDev", email = "info@belladev.es"},
+]
+keywords = ["astrophotography", "astronomy", "image-processing", "stacking", "astro"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+
+dependencies = [
+    "astropy>=6.0",
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "astroalign>=2.4",
+    "opencv-python-headless>=4.8",
+    "rawpy>=0.19",
+    "tifffile>=2023.7",
+    "PyQt6>=6.5",
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+ai = ["onnxruntime>=1.15"]
+gif = ["Pillow>=10.0"]
+
+[project.urls]
+Homepage = "https://belladev.es"
+Repository = "https://github.com/belladev/astro-belladev"
+Issues = "https://github.com/belladev/astro-belladev/issues"
+
+[project.gui-scripts]
+astro-belladev = "app:main"
+
+[tool.setuptools.packages.find]
+include = ["astro_belladev*"]
