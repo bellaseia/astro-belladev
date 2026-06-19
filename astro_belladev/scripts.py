@@ -276,13 +276,18 @@ class ScriptManager:
         self._dirs = scripts_dirs or []
 
         if not self._dirs:
-            app_dir = Path(__file__).parent / "scripts"
-            app_dir.mkdir(exist_ok=True)
-            self._dirs.append(str(app_dir))
-
+            # Solo usar carpeta del usuario (funciona en .exe)
             user_dir = Path.home() / ".astro_belladev" / "scripts"
             user_dir.mkdir(parents=True, exist_ok=True)
             self._dirs.append(str(user_dir))
+
+            # Carpeta junto al modulo (solo en desarrollo)
+            try:
+                app_dir = Path(__file__).parent / "scripts"
+                app_dir.mkdir(exist_ok=True)
+                self._dirs.insert(0, str(app_dir))
+            except (OSError, PermissionError):
+                pass
 
     def scan(self):
         self._scripts.clear()
