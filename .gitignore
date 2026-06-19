@@ -22,3 +22,4 @@ _test_*
 astro_belladev/scripts/*.abs
 astro_belladev/scripts/*.py
 !astro_belladev/scripts/__init__.py
+DEVELOPMENT.md
